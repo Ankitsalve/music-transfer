@@ -1,0 +1,34 @@
+const { getSpotifyTracks } = require("../utils/spotify");
+const { searchYouTube } = require("../utils/youtube");
+
+// MAIN TRANSFER FUNCTION
+async function transfer(req, res) {
+  const { link, type } = req.body;
+
+  try {
+    // Extract playlist ID
+    const playlistId = link.split("playlist/")[1].split("?")[0];
+
+    if (type === "spotify_to_youtube") {
+      const tracks = await getSpotifyTracks(playlistId);
+
+      let results = [];
+
+      for (let t of tracks) {
+        const query = `${t.name} ${t.artist}`;
+        const videoId = await searchYouTube(query);
+
+        results.push({
+          track: query,
+          youtube: videoId
+        });
+      }
+
+      res.json({ message: "Transfer completed!", results });
+    }
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+}
+
+module.exports = { transfer };
